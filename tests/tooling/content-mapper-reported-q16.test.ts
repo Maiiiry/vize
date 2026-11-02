@@ -36,8 +36,13 @@ const modelEventsCommand = syntaxCommand.replace(
   " --nocapture",
   " content_mapper_tsgo_cli::reported_model_events_11390_11391:: --nocapture",
 );
+const staticRefCommand = modelEventsCommand.replace(
+  " --nocapture",
+  " content_mapper_tsgo_cli::dynamic_template_refs::standard_tsgo_static_template_refs_read_runtime_bindings_and_keep_true_unused --nocapture",
+);
 const workflow = actualWorkflow
   .replace(standardRoleCommand, standardCommand)
+  .replace(staticRefCommand, modelEventsCommand)
   .replace(modelEventsCommand, syntaxCommand);
 const data = parse(workflow);
 const childWorkflow = fs.readFileSync(
@@ -231,7 +236,7 @@ test("actual job conditions preserve every old-mode truth-table row and isolate 
 
 test("dynamic-target printer roles are declared before capture and retain standard whole packets", () => {
   assert.equal(actualWorkflow.split(standardRoleCommand).length, 2);
-  assert.equal(actualWorkflow.split(modelEventsCommand).length, 2);
+  assert.equal(actualWorkflow.split(staticRefCommand).length, 2);
   const actual = parse(actualWorkflow);
   const steps = actual.jobs["exact-tsgo-project"].steps;
   const standard = steps.find(

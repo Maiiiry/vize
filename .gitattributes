@@ -249,3 +249,7 @@ tests/_fixtures/differential/linter/slot-conditional-arms-10822/FieldBody.vue.tx
 tests/_fixtures/differential/linter/slot-conditional-arms-10822/cases.json -text
 tests/_fixtures/differential/linter/slot-conditional-arms-10822/semantic-successors.json -text
 tests/_fixtures/differential/linter/slot-conditional-arms-10822/source-provenance.json -text
+
+# Complete retained static-ref initialization regression inputs.
+tests/_fixtures/differential/typechecker/static-template-ref-runtime-11377/StaticRef.vue.txt -text
+tests/_fixtures/differential/typechecker/static-template-ref-uninitialized-runtime-11377/StaticRef.vue.txt -text
