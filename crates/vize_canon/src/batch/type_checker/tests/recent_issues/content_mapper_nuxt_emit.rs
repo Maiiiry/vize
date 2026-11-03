@@ -18,7 +18,7 @@ fn content_mapper_preserves_emit_with_nuxt_pattern_injections() {
         result
             .text
             .matches(
-                "$ReplaceComponentProps<$ComponentInstance, $AuthoredKeyWitness<$AuthoredProps>"
+                "$ReplaceComponentProps<$ComponentOwnInstance, $AuthoredKeyWitness<$AuthoredProps>"
             )
             .count(),
         1

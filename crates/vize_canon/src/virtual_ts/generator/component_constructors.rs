@@ -15,8 +15,8 @@ use vize_l0::ts;
 
 use super::component_export::GenericComponentContract;
 use super::legacy_vue2::{
-    exposed_unwrap_helper, generic_instance_suffix, instance_helper, instance_suffix,
-    needs_legacy_vue2_helpers,
+    exposed_unwrap_helper, generic_instance_suffix, instance_base, instance_helper,
+    instance_suffix, needs_legacy_vue2_helpers,
 };
 use super::setup_props::SetupPropsPlan;
 
@@ -153,6 +153,23 @@ pub(super) fn emit_component_constructors<'a>(
             "type $ComponentConstructor = {\n  new (...args: any[]): any;\n  new (...args: any[]): $ComponentInstance;\n} & $Vue2ComponentConstructorStatics;\n",
         );
     } else {
+        // Select only the four owned members without remapping the public base.
+        // Keep the instance literal anonymous for TypeScript diagnostic display.
+        ts.push_str("type $ComponentOwnInstance = Pick<$ComponentInstance, '$props' | '__vizeRawProps' | '$emit' | '$slots'>;\n");
+        let mut instance_base_ref = String::default();
+        if aliases.has_authored_default {
+            append!(
+                instance_base_ref,
+                "Omit<{authored_instance}, '$props' | '$emit' | '$slots'> & "
+            );
+        }
+        instance_base(
+            &mut instance_base_ref,
+            legacy_vue2,
+            dialect,
+            aliases.has_exposed_type,
+            (aliases.has_root_el, aliases.has_refs),
+        );
         let mut props_ref = aliases
             .generic_params
             .map(|_| setup_props_plan.generic_fallback_component_props_type_ref())
@@ -179,7 +196,7 @@ pub(super) fn emit_component_constructors<'a>(
         // inferred, so the authored contract is unchanged.
         append!(
             *ts,
-            "type $ComponentConstructor = new <$AuthoredProps = unknown>(props?: $AuthoredProps & $ComponentInput<{props_ref}, {emit_props_ref}, $AuthoredProps>, ...args: any[]) => $UsePublicInstance<$AuthoredProps> extends true ? $ComponentInstance : $ReplaceComponentProps<$ComponentInstance, $AuthoredKeyWitness<$AuthoredProps> & $ComponentInputProps<{props_ref}, {emit_props_ref}> & $ComponentInputGuard<{props_ref}, {emit_props_ref}, $AuthoredProps>>;\n"
+            "type $ComponentConstructor = new <$AuthoredProps = unknown>(props?: $AuthoredProps & $ComponentInput<{props_ref}, {emit_props_ref}, $AuthoredProps>, ...args: any[]) => $UsePublicInstance<$AuthoredProps> extends true ? $ComponentInstance : $ReplaceComponentProps<$ComponentOwnInstance, $AuthoredKeyWitness<$AuthoredProps> & $ComponentInputProps<{props_ref}, {emit_props_ref}> & $ComponentInputGuard<{props_ref}, {emit_props_ref}, $AuthoredProps>> & {instance_base_ref};\n"
         );
     }
 
