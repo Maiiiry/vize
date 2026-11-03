@@ -122,8 +122,8 @@ pub(super) fn retain_provenance(manifest: &mut Value) {
 #[cfg(test)]
 mod tests {
     use super::{
-        AFTER, BEFORE, PATH, PUBLIC_AFTER, PUBLIC_BEFORE, PUBLIC_PATH, preamble_before,
-        previous_public, retain_provenance, source_before,
+        AFTER, ASSET_AFTER_SHA, ASSET_BEFORE_SHA, BEFORE, PATH, PUBLIC_AFTER, PUBLIC_BEFORE,
+        PUBLIC_PATH, preamble_before, previous, previous_public, retain_provenance, source_before,
     };
     use serde_json::json;
 
@@ -136,19 +136,24 @@ mod tests {
         "/../../npm/cli/virtual-ts-globals.d.ts"
     ));
 
+    fn newer(path: &str, current: &str) -> String {
+        super::super::public_base_keys::source_before(path, current.to_owned())
+    }
+
     #[test]
     fn current_asset_preamble_and_sdk_reconstruct_only_the_tail_accumulator_layer() {
         let asset = source_before(PATH, CURRENT_ASSET.to_owned());
-        assert_eq!(asset.replacen(BEFORE, AFTER, 1), CURRENT_ASSET);
-        let newer = super::super::public_base_keys::preamble_before(
+        assert_eq!(asset.replacen(BEFORE, AFTER, 1), newer(PATH, CURRENT_ASSET));
+        let newer_preamble = super::super::public_base_keys::preamble_before(
             vize_canon::virtual_ts::SHARED_PREAMBLE_DTS,
         );
         let preamble = preamble_before(vize_canon::virtual_ts::SHARED_PREAMBLE_DTS);
-        assert_eq!(preamble.replacen(BEFORE, AFTER, 1), newer);
-        let newer =
-            super::super::public_base_keys::source_before(PUBLIC_PATH, CURRENT_PUBLIC.to_owned());
+        assert_eq!(preamble.replacen(BEFORE, AFTER, 1), newer_preamble);
         let public = source_before(PUBLIC_PATH, CURRENT_PUBLIC.to_owned());
-        assert_eq!(public.replacen(PUBLIC_BEFORE, PUBLIC_AFTER, 1), newer);
+        assert_eq!(
+            public.replacen(PUBLIC_BEFORE, PUBLIC_AFTER, 1),
+            newer(PUBLIC_PATH, CURRENT_PUBLIC)
+        );
         let other = "crates/vize_canon/src/virtual_ts/helpers/declarations/core-types.d.ts.txt";
         assert_eq!(
             source_before(other, CURRENT_ASSET.to_owned()),
@@ -161,18 +166,28 @@ mod tests {
 
     #[test]
     fn missing_duplicate_stale_and_extra_bytes_refuse() {
+        let asset = newer(PATH, CURRENT_ASSET);
         for mutated in [
-            CURRENT_ASSET.replacen(AFTER, "", 1),
-            format!("{CURRENT_ASSET}{AFTER}"),
-            CURRENT_ASSET.replacen(AFTER, BEFORE, 1),
-            format!("{CURRENT_ASSET}\n"),
+            asset.replacen(AFTER, "", 1),
+            format!("{asset}{AFTER}"),
+            asset.replacen(AFTER, BEFORE, 1),
+            format!("{asset}\n"),
         ] {
-            assert!(std::panic::catch_unwind(|| source_before(PATH, mutated.clone())).is_err());
+            assert!(
+                std::panic::catch_unwind(|| previous(
+                    &mutated,
+                    1664,
+                    ASSET_BEFORE_SHA,
+                    ASSET_AFTER_SHA
+                ))
+                .is_err()
+            );
         }
+        let public = newer(PUBLIC_PATH, CURRENT_PUBLIC);
         for mutated in [
-            CURRENT_PUBLIC.replacen(PUBLIC_AFTER, "", 1),
-            CURRENT_PUBLIC.replacen(PUBLIC_AFTER, PUBLIC_BEFORE, 1),
-            format!("{CURRENT_PUBLIC}\n"),
+            public.replacen(PUBLIC_AFTER, "", 1),
+            public.replacen(PUBLIC_AFTER, PUBLIC_BEFORE, 1),
+            format!("{public}\n"),
         ] {
             assert!(std::panic::catch_unwind(|| previous_public(&mutated)).is_err());
         }
