@@ -31,13 +31,8 @@ export const PLANT_CODES: Record<PlantKind, readonly string[]> = {
  * prove the tool checked the corpus, and a fix fails the gate until the entry
  * is dropped.
  */
-export const PLANT_MULTIPLICITY: Record<string, Partial<Record<PlantKind, number>>> = {
-  "tsc-vize-mapper": { "v-model": 0 },
-  "tsrs-fast-vize-mapper": { "v-model": 0 },
-};
-export const PLANT_MULTIPLICITY_NOTES: readonly string[] = [
-  "The Vize mapper lanes expect no error on the `v-model` plant: the mapper does not check the `update:modelValue` payload against the bound ref (#11643).",
-];
+export const PLANT_MULTIPLICITY: Record<string, Partial<Record<PlantKind, number>>> = {};
+export const PLANT_MULTIPLICITY_NOTES: readonly string[] = [];
 
 const STATS_START = /^Files:\s+\d+$/u;
 const STAT_LINE = /^(\S.*?):\s+(\d[\d.,]*\s?[A-Za-z%]*)$/u;
