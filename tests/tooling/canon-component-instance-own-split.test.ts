@@ -83,7 +83,7 @@ function component(index: number, form: Form): string {
       : form === "picked own"
         ? [
             `type $ComponentInstance = ${own} & ${bases.new};`,
-            "type $ComponentOwnInstance = Pick<$ComponentInstance, '$props' | '__vizeRawProps' | '$emit' | '$slots'>;",
+            "type $ComponentOwnInstance = globalThis.Pick<$ComponentInstance, '$props' | '__vizeRawProps' | '$emit' | '$slots'>;",
             `declare const i: $ReplaceComponentProps<$ComponentOwnInstance, { b: string }> & ${base};`,
           ]
         : [
@@ -269,6 +269,31 @@ void test("selecting the generated instance's four owned members preserves every
     });
     assert.deepEqual(diagnostics, [], name);
   }
+});
+
+void test("the owned-member selection cannot capture an authored Pick type", () => {
+  const members = augment("readonly m0: number; readonly m1: number;");
+  const authored = `type Pick = never;\n${component(0, "picked own")}`;
+  const { diagnostics } = check({
+    "members.ts": members,
+    "shadow.ts": authored,
+  });
+  assert.deepEqual(diagnostics, []);
+  const wrongProps = check({
+    "members.ts": members,
+    "shadow.ts": `${authored}\nconst wrong: typeof i.$props = { b: 123 };`,
+  });
+  assert.equal(wrongProps.diagnostics.length, 1);
+  assert.match(
+    wrongProps.diagnostics[0]!,
+    /TS2322 Type 'number' is not assignable to type 'string'/u,
+  );
+  const captured = check({
+    "members.ts": members,
+    "shadow.ts": authored.replace("globalThis.Pick", "Pick"),
+  });
+  assert.equal(captured.diagnostics.length, 1);
+  assert.match(captured.diagnostics[0]!, /TS2315 Type 'Pick' is not generic/u);
 });
 
 void test("the oracle rejects a replacement that drops the public base", () => {

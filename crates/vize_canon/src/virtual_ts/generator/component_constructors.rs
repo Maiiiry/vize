@@ -155,7 +155,7 @@ pub(super) fn emit_component_constructors<'a>(
     } else {
         // Select only the four owned members without remapping the public base.
         // Keep the instance literal anonymous for TypeScript diagnostic display.
-        ts.push_str("type $ComponentOwnInstance = Pick<$ComponentInstance, '$props' | '__vizeRawProps' | '$emit' | '$slots'>;\n");
+        ts.push_str("type $ComponentOwnInstance = globalThis.Pick<$ComponentInstance, '$props' | '__vizeRawProps' | '$emit' | '$slots'>;\n");
         let mut instance_base_ref = String::default();
         if aliases.has_authored_default {
             append!(
