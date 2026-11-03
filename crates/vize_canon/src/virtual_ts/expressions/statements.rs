@@ -212,8 +212,12 @@ pub(super) fn generate_expression_statement(
         indent,
         checks,
     );
-    if expr.kind == TemplateExpressionKind::VBind
-        && let Some(collector) = checks.diagnostic_ownership
+    // A component `v-model` value is a prop like `:prop`; its bare statement
+    // only carries navigation, so the prop checks own its diagnostics (#11655).
+    if matches!(
+        expr.kind,
+        TemplateExpressionKind::VBind | TemplateExpressionKind::VModel
+    ) && let Some(collector) = checks.diagnostic_ownership
         && let Some(owner) = checks
             .prop_expression_owners
             .and_then(|owners| owners.get(&(expr.scope_id.as_u32(), expr.start, expr.end)))
